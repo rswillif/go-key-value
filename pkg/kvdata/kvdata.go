@@ -55,3 +55,7 @@ func (d DataEntries) Exists(key string) bool {
   _, ok := d[key]
   return ok
 }
+
+func NewDataEntries() DataEntries {
+  return DataEntries{}
+}
