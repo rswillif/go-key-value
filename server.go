@@ -26,7 +26,7 @@ func main() {
   http.HandleFunc("/log", showLogs)
   http.HandleFunc("/test", testLoad)
 
-  if len(os.Args) > 1 || len(os.Args) == 0 {
+  if len(os.Args) == 1 {
     // initializes server at default port 3000 in the case that
     // the user doesn't specify a port as a CLA
     // use case $:./server &
@@ -36,6 +36,7 @@ func main() {
     // initializes server at user specified port as a CLA
     // use case $:./server 8000 &
     // use case would initialize server on port 8000
+    fmt.Fprintf(os.Stderr, "%s %v\n", "Server listening on PORT:", os.Args[1])
     log.Fatal(http.ListenAndServe("localhost:" + os.Args[1], nil))
     log.Println("KVStore Server Initialized. Listening on PORT: " + os.Args[1])
   }
@@ -43,13 +44,13 @@ func main() {
 
 // showAll renders all data currently in the data store at root/home url "/"
 func showData(w http.ResponseWriter, r *http.Request) {
-  fmt.Fprintf(w, "%s\n", "Current data: {")
+  fmt.Fprintf(w, "%s\n\n", "Current data: {")
 
   for key, value := range dataStore {
     fmt.Fprintf(w, "%s => %s\n", key, value)
   }
 
-  fmt.Fprintf(w, "%s\n", "}")
+  fmt.Fprintf(w, "\n\n%s\n", "}")
 }
 
 // getData retrieves data given a particular key
