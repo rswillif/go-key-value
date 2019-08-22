@@ -58,21 +58,29 @@ func showData(w http.ResponseWriter, r *http.Request) {
 // getData retrieves data given a particular key
 // request format "/GET/key"
 func getData(w http.ResponseWriter, r *http.Request) {
+  var wg sync.WaitGroup
+  var mu sync.Mutex
+
   key := strings.Replace(r.URL.Path, "/", "", 1)
 
-  if dataStore.Exists(key) {
+  if dataStore.Exists(wg, mu, key) {
     fmt.Fprintf(w, "%s %v %s %v\n", "Key: ", key, "Value: ", dataStore[key])
     logs = append(logs, time.Now().String() + " => GET '" + key + "' , Status: 0\n")
+    wg.Wait()
   } else {
     fmt.Fprintf(w, "%s %v\n", "No data found for key: ", key)
     logs = append(logs, time.Now().String() + " => GET '" + key + "' , Status: 1\n")
+    wg.Wait()
   }
 }
 
 // updateData updates and writes over existing value data for an existing key
 // in the case of a non-existing key, a new key/value pair will be stored
 // request format "/UPDATE/key/value"
-func updateData(wg *sync.WaitGroup, w http.ResponseWriter, r *http.Request) {
+func updateData(w http.ResponseWriter, r *http.Request) {
+ var wg sync.WaitGroup
+ var mu sync.Mutex
+
   path := r.URL.Path
 
   if path[len(path) - 1:] == "/" {
@@ -88,7 +96,7 @@ func updateData(wg *sync.WaitGroup, w http.ResponseWriter, r *http.Request) {
   key := pathSlice[2]
   value := pathSlice[3]
 
-  resp := dataStore.Update(key, value) // resp is a bool
+  resp := dataStore.Update(wg, mu, key, value) // resp is a bool
 
   if resp {
     fmt.Fprintf(w, "Entry '%s' successfully updated \n", key)
@@ -104,6 +112,9 @@ func updateData(wg *sync.WaitGroup, w http.ResponseWriter, r *http.Request) {
 // deleteData deletes an existing record given a specific key
 // request format "/DELETE/key"
 func deleteData(wg *sync.WaitGroup, w http.ResponseWriter, r *http.Request) {
+  var wg sync.WaitGroup
+  var mu sync.Mutex
+
   path := r.URL.Path
 
   if path[len(path) - 1:] == "/" {
@@ -118,7 +129,7 @@ func deleteData(wg *sync.WaitGroup, w http.ResponseWriter, r *http.Request) {
 
   key := pathSlice[2]
 
-  resp := dataStore.Delete(key) // resp is a bool
+  resp := dataStore.Delete(wg, mu, key) // resp is a bool
 
   if resp {
     fmt.Fprintf(w, "Entry '%s' successfully deleted \n", key)

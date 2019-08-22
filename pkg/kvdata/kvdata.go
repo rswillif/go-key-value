@@ -18,7 +18,7 @@ func (d DataEntries) Add(wg *sync.WaitGroup, mu *sync.Mutex, key string, value s
   mu.Lock()
   defer wg.Done()
 
-  if d.Exists(key) {
+  if d.Exists(wg, mu, key) {
     return false
   } else {
     entry := DataEntry{ Key: key, Value: value, Created: time.Now(), Updated: time.Now() }
@@ -33,14 +33,14 @@ func (d DataEntries) Update(wg *sync.WaitGroup, mu *sync.Mutex, key string, valu
   mu.Lock()
   defer wg.Done()
 
-  if d.Exists(key) {
+  if d.Exists(wg, mu, key) {
     d[key].Value = value
     d[key].Updated = time.Now()
-    m.Unlock()
+    mu.Unlock()
 
     return true
   } else {
-    return d.Add(key, value)
+    return d.Add(wg, mu, key, value)
   }
 }
 
@@ -48,7 +48,7 @@ func (d DataEntries) Delete(wg *sync.WaitGroup, mu *sync.Mutex, key string) bool
   mu.Lock()
   defer wg.Done()
 
-  if d.Exists(key) {
+  if d.Exists(wg, mu, key) {
     delete(d, key)
     mu.Unlock()
 
