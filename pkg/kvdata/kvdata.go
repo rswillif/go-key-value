@@ -14,45 +14,57 @@ type DataEntry struct {
   Updated time.Time
 }
 
-var mu sync.Mutex
+func (d DataEntries) Add(wg *sync.WaitGroup, mu *sync.Mutex, key string, value string) bool {
+  mu.Lock()
+  defer wg.Done()
 
-func (d DataEntries) Add(key string, value string) bool {
   if d.Exists(key) {
     return false
   } else {
     entry := DataEntry{ Key: key, Value: value, Created: time.Now(), Updated: time.Now() }
-    mu.Lock()
     d[key] = &entry
     mu.Unlock()
+
     return true
   }
 }
 
-func (d DataEntries) Update(key string, value string) bool {
+func (d DataEntries) Update(wg *sync.WaitGroup, mu *sync.Mutex, key string, value string) bool {
+  mu.Lock()
+  defer wg.Done()
+
   if d.Exists(key) {
-    mu.Lock()
     d[key].Value = value
     d[key].Updated = time.Now()
-    mu.Unlock()
+    m.Unlock()
+
     return true
   } else {
     return d.Add(key, value)
   }
 }
 
-func (d DataEntries) Delete(key string) bool {
+func (d DataEntries) Delete(wg *sync.WaitGroup, mu *sync.Mutex, key string) bool {
+  mu.Lock()
+  defer wg.Done()
+
   if d.Exists(key) {
-    mu.Lock()
     delete(d, key)
     mu.Unlock()
+
     return true
   } else {
     return false
   }
 }
 
-func (d DataEntries) Exists(key string) bool {
+func (d DataEntries) Exists(wg *sync.WaitGroup, mu *sync.Mutex, key string) bool {
+  mu.Lock()
+  defer wg.Done()
+
   _, ok := d[key]
+  mu.Unlock()
+
   return ok
 }
 

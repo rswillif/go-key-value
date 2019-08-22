@@ -5,9 +5,11 @@ import (
   "os"
   "log"
   "net/http"
+  "sync"
   "strings"
   "time"
   "math/rand"
+
   "./pkg/kvdata"
 )
 
@@ -70,7 +72,7 @@ func getData(w http.ResponseWriter, r *http.Request) {
 // updateData updates and writes over existing value data for an existing key
 // in the case of a non-existing key, a new key/value pair will be stored
 // request format "/UPDATE/key/value"
-func updateData(w http.ResponseWriter, r *http.Request) {
+func updateData(wg *sync.WaitGroup, w http.ResponseWriter, r *http.Request) {
   path := r.URL.Path
 
   if path[len(path) - 1:] == "/" {
@@ -91,15 +93,17 @@ func updateData(w http.ResponseWriter, r *http.Request) {
   if resp {
     fmt.Fprintf(w, "Entry '%s' successfully updated \n", key)
     logs = append(logs, time.Now().String() + " => UPDATE '" + key + "' , Status: 0\n")
+    wg.Wait()
   } else {
     fmt.Fprintf(w, "Something went wrong trying to update '%s'\n", key)
     logs = append(logs, time.Now().String() + " => (PANIC) UPDATE '" + key + "' , Status: 1\n")
+    wg.Wait()
   }
 }
 
 // deleteData deletes an existing record given a specific key
 // request format "/DELETE/key"
-func deleteData(w http.ResponseWriter, r *http.Request) {
+func deleteData(wg *sync.WaitGroup, w http.ResponseWriter, r *http.Request) {
   path := r.URL.Path
 
   if path[len(path) - 1:] == "/" {
@@ -119,9 +123,11 @@ func deleteData(w http.ResponseWriter, r *http.Request) {
   if resp {
     fmt.Fprintf(w, "Entry '%s' successfully deleted \n", key)
     logs = append(logs, time.Now().String() + " => DELETE '" + key + "' , Status: 0\n")
+    wg.Wait()
   } else {
     fmt.Fprintf(w, "Something went wrong trying to delete '%s'. Status: \n", key, resp)
     logs = append(logs, time.Now().String() + " => (PANIC) DELETE '" + key + "' , Status: 1\n")
+    wg.Wait()
   }
 }
 
